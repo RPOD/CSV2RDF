@@ -12,12 +12,12 @@
 @prefix statbel: 	<[LINK]> .
 
 #--Data Set
-statbel:dataset-employmentUnemployment a qb:DataSet;
+statbel:dataset-hpi a qb:DataSet;
 	dc:title		"House price index"@en;
 	rdfs:comment	"Statbel house price index dataset"@en;
 	dc:publisher	<http://statbel.fgov.be>;
 	dc:issued		"2015-03-25"^^dc:date;
-	qb:structure	statbel:dsd-employmentUnemployment;
+	qb:structure	statbel:dsd-hpi;
 	.
 	
 #-- Data structure definition

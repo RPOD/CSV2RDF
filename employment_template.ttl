@@ -14,7 +14,7 @@
 #--Data Set
 statbel:dataset-employmentUnemployment a qb:DataSet;
 	dc:title		"Employment, unemployment, labour market structure"@en;
-	rdfs:comment	"Statbel unemploymen, employment, labour market structure dataset"@en;
+	rdfs:comment	"Statbel unemployment, employment, labour market structure dataset"@en;
 	dc:publisher	<http://statbel.fgov.be>;
 	dc:issued		"2013-08-14"^^dc:date;
 	qb:structure	statbel:dsd-employmentUnemployment;
