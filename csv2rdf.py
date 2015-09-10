@@ -47,7 +47,7 @@ class Csv2Rdf:
             for i, entry in enumerate(data[1:]):
                 output = ('statbel:o' + str(i + 1) + ' a qb:Observation;\n\t' +
                         'qb:dataSet\tstatbel:dataset-employmentUnemployment;\n\t' +
-                        'sdmx-dimension:refPeriod\t"' + entry[0] + '"^^dc:date;\n\t' +
+                        'sdmx-dimension:refPeriod\t"' + self.transferQuartal(entry[0][-4:], entry[0][1]) + '"^^xsd:date;\n\t' +
                         'statbel:employed\t' + entry[3] + ';\n\t' +
                         'statbel:unemployed\t' + entry[1] + ';\n\t' +
                         'statbel:inactive\t' + entry[2] + ';\n\t.\n\n')
@@ -55,13 +55,17 @@ class Csv2Rdf:
         elif self.filename == 'hpi':
             for i, entry in enumerate(data[1:]):
                 output = ('statbel:o' + str(i + 1) + ' a qb:Observation;\n\t' +
-                        'sdmx-dimension:refPeriod\t"' + entry[0][4:6] + '/' + entry[0][:4] + '"^^dc:date;\n\t' +
-                        'statbel:inflation\t' + entry[1] + '\n\t.\n\n')
+                        'qb:dataSet\tstatbel:dataset-hpi;\n\t'
+                        'sdmx-dimension:refPeriod\t"' + self.transferQuartal(entry[0][:4], entry[0][-1]) + '"^^xsd:date;\n\t' +
+                        'statbel:inflation\t' + entry[1].replace(',','.') + ';\n\t.\n\n')
                 template.append(output)
         of = open(self.filename + '_output.ttl', 'w', encoding="utf-8")
         for line in template:
             of.write(line)
         of.close
+
+    def transferQuartal(self, year, quartal):
+        return str(int(year) + 1*(quartal == '4')) + '.' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '.01'
 
     """
     Testmethod

@@ -3,20 +3,21 @@
 @prefix rdf: 	<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> .
 @prefix dc: 	<http://purl.org/dc/elements/1.1/> .
+@prefix xsd:	<http://www.w3.org/2001/XMLSchema#> .
 
 @prefix sdmx-measure:    <http://purl.org/linked-data/sdmx/2009/measure#> .
 
 @prefix qb: 	<http://purl.org/linked-data/cube#> .
 
 #---Dataset Prefix
-@prefix statbel: 	<[LINK]> .
+@prefix statbel: 	<http://statbel.fgov.be/> .
 
 #--Data Set
 statbel:dataset-hpi a qb:DataSet;
 	dc:title		"House price index"@en;
-	rdfs:comment	"Statbel house price index dataset"@en;
+	rdfs:comment	"The statbel dataset presenting the inflation of the house price index per quartal"@en;
 	dc:publisher	<http://statbel.fgov.be>;
-	dc:issued		"2015-03-25"^^dc:date;
+	dc:issued		"2015-03-25"^^xsd:date;
 	qb:structure	statbel:dsd-hpi;
 	.
 	
@@ -29,8 +30,9 @@ statbel:dsd-hpi a qb:DataStructureDefinition;
 
 #--Measures
 statbel:inflation a rdf:Property, qb:MeasureProperty;
-	rdfs:label "Amount employed people"@en;
-	rdfs:subPropertyOf sdmx-measure:obsValue;
+	rdfs:label 	"Amount employed people"@en;
+	rdfs:range	xsd:decimal;
+	rdfs:subPropertyOf	sdmx-measure:obsValue;
 	.
 
 #--Observations
