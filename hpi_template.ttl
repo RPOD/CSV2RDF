@@ -10,7 +10,7 @@
 @prefix qb: 	<http://purl.org/linked-data/cube#> .
 
 #---Dataset Prefix
-@prefix statbel: 	<http://statbel.fgov.be/> .
+@prefix statbel: 	<http://www.freme-project.eu/datasets/statbel/house-price-index/> .
 
 #--Data Set
 statbel:dataset-hpi a qb:DataSet;
@@ -30,7 +30,7 @@ statbel:dsd-hpi a qb:DataStructureDefinition;
 
 #--Measures
 statbel:inflation a rdf:Property, qb:MeasureProperty;
-	rdfs:label 	"Amount employed people"@en;
+	rdfs:label 	"House price index inflation"@en;
 	rdfs:range	xsd:decimal;
 	rdfs:subPropertyOf	sdmx-measure:obsValue;
 	.

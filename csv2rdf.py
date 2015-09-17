@@ -65,7 +65,7 @@ class Csv2Rdf:
         of.close
 
     def transferQuartal(self, year, quartal):
-        return str(int(year) + 1*(quartal == '4')) + '.' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '.01'
+        return str(int(year) + 1*(quartal == '4')) + '-' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '-01'
 
     """
     Testmethod

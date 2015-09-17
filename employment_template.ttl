@@ -10,7 +10,7 @@
 @prefix qb: 	<http://purl.org/linked-data/cube#> .
 
 #---Dataset Prefix
-@prefix statbel: 	<http://statbel.fgov.be/> .
+@prefix statbel: 	<http://www.freme-project.eu/datasets/statbel/employment-unemployment/> .
 
 #--Data Set
 statbel:dataset-employmentUnemployment a qb:DataSet;
