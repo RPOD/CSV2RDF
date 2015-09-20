@@ -22,11 +22,11 @@ class Csv2Rdf:
         t.close()
         return text
 
-    def readTextInput(self):
+    def readTextInput(self, splitter):
         text = self.readInputFile()
         labels = []
         data = []
-        for label in text[0].split(';', -2):
+        for label in text[0].split(splitter, -2):
             if not '\n' in label:
                 if '\ufeff' in label:
                     labels.append(label[1:])
@@ -35,10 +35,40 @@ class Csv2Rdf:
         data.append(labels)
         for entry in text[1:]:
             lineData = []
-            for value in entry.split(';', -2):
+            for value in entry.split(splitter, -2):
                 if not '\n' in value:
                     lineData.append(value)
             data.append(lineData)
+        return data
+
+    def readMultilineInput(self, splitter):
+        text = self.readInputFile()
+        labels = []
+        data = []
+        for label in text[0].split(splitter):
+            if '\n' != label:
+                if '\ufeff' in label:
+                    labels.append(label[1:])
+                else:
+                    labels.append(label)
+        data.append(labels)
+        lineData = []
+        toggle = False
+        for entry in text[1:]:
+            for value in entry.split(splitter):
+                if toggle:
+                    lineData[-1] = lineData[-1] + value
+                else:
+                    if value == '\n':
+                        value = ''
+                    lineData.append(value)
+                if 'ᛘ' in value:
+                    toggle = not toggle
+            if (len(data[0]) == len(lineData)):
+                lineData[-1] = lineData[-1][:-1]
+                data.append(lineData)
+                print(lineData)
+                del lineData[:]
         return data
 
     def createOutput(self, data):
@@ -59,6 +89,7 @@ class Csv2Rdf:
                         'sdmx-dimension:refPeriod\t"' + self.transferQuartal(entry[0][:4], entry[0][-1]) + '"^^xsd:date;\n\t' +
                         'statbel:inflation\t' + entry[1].replace(',','.') + ';\n\t.\n\n')
                 template.append(output)
+        #TODO Cordis
         of = open(self.filename + '_output.ttl', 'w', encoding="utf-8")
         for line in template:
             of.write(line)
@@ -80,8 +111,12 @@ class Csv2Rdf:
 
 
 def main():
-    cr = Csv2Rdf(input('Name of .csv file:'))
-    cr.createOutput(cr.readTextInput())
+    file = input('Name of .csv file:')
+    cr = Csv2Rdf(file)
+    if 'cordis' in file:
+        cr.readMultilineInput('ᛥ')
+    else:
+        cr.createOutput(cr.readTextInput(';'))
 
 if __name__ == '__main__':
     main()
