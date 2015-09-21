@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from iso3166 import countries
 
 class Csv2Rdf:
 
@@ -97,6 +97,9 @@ class Csv2Rdf:
 
     def transferQuartal(self, year, quartal):
         return str(int(year) + 1*(quartal == '4')) + '-' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '-01'
+
+    def alpha2Name(self, alpha2):
+        return countries.get(alpha2).name
 
     """
     Testmethod
