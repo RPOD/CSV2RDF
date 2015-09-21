@@ -95,6 +95,13 @@ class Csv2Rdf:
             of.write(line)
         of.close
 
+    def createCordisProjects(self, entry):
+        output = 'cordis:' + entry[2] + 'a doap:Project ;\n\t' +
+                    'doap:name\t' + entry[2] + ';\n\t'
+        if len(entry[10]) > 1:
+            output = output + 'doap:homepage\t' + entry[10] + ';\n\t'
+        
+
     def transferQuartal(self, year, quartal):
         return str(int(year) + 1*(quartal == '4')) + '-' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '-01'
 
