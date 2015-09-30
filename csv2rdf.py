@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from iso3166 import countries
+from datetime import date
 
 class Csv2Rdf:
 
@@ -59,11 +60,9 @@ class Csv2Rdf:
                 lineData = []
                 newLineData = not newLineData
             for value in entry.split(splitter):
-                if len(value) > 1:
-                    value[:2].replace('"','')
-                    value[-3:].replace('"','')
-                    value[:2].replace("'",'')
-                    value[-3:].replace("'",'')
+                if '"' in value or "'" in value:
+                    value.replace('"','')
+                    value.replace("'",'')
                 if toggle:
                     lineData[-1] = lineData[-1] + value.replace('ᛘ','')
                 else:
@@ -110,6 +109,9 @@ class Csv2Rdf:
                     'dc:title\t' + entry[7] + ';\n\t')
         if len(entry[10]) > 1:
             output = output + 'doap:homepage\t' + entry[10] + ';\n\t'
+        if len(entry[8]) > 1:
+            output = output + ( 'doap:created\t' + entry[8].split('/')[2] + '-' + entry[8].split('/')[0] + '-' + entry[8].split('/')[1] + '^^xsd:date;\n\t' +
+                'dc:PeriodOfTime\t' + str((date(int(entry[9].split('/')[2]), int(entry[9].split('/')[0]), int(entry[9].split('/')[1])) - date(int(entry[8].split('/')[2]), int(entry[8].split('/')[0]), int(entry[8].split('/')[1]))).days) + ';\n\t' )
         output = output + 'doap:description\t' + entry[11] + ';\n\t'
         return output
 
