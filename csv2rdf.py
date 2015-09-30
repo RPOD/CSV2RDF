@@ -52,23 +52,30 @@ class Csv2Rdf:
                 else:
                     labels.append(label)
         data.append(labels)
-        lineData = []
         toggle = False
+        newLineData= True
         for entry in text[1:]:
+            if newLineData:
+                lineData = []
+                newLineData = not newLineData
             for value in entry.split(splitter):
+                if len(value) > 1:
+                    value[:2].replace('"','')
+                    value[-3:].replace('"','')
+                    value[:2].replace("'",'')
+                    value[-3:].replace("'",'')
                 if toggle:
-                    lineData[-1] = lineData[-1] + value
+                    lineData[-1] = lineData[-1] + value.replace('ᛘ','')
                 else:
                     if value == '\n':
                         value = ''
-                    lineData.append(value)
+                    lineData.append(value.replace('ᛘ',''))
                 if 'ᛘ' in value:
                     toggle = not toggle
             if (len(data[0]) == len(lineData)):
                 lineData[-1] = lineData[-1][:-1]
                 data.append(lineData)
-                print(lineData)
-                del lineData[:]
+                newLineData = not newLineData
         return data
 
     def createOutput(self, data):
@@ -89,18 +96,23 @@ class Csv2Rdf:
                         'sdmx-dimension:refPeriod\t"' + self.transferQuartal(entry[0][:4], entry[0][-1]) + '"^^xsd:date;\n\t' +
                         'statbel:inflation\t' + entry[1].replace(',','.') + ';\n\t.\n\n')
                 template.append(output)
-        #TODO Cordis
+        elif self.filename == 'cordis_projects':
+            for entry in data[1:]:
+                template.append(self.createCordisProjects(entry))
         of = open(self.filename + '_output.ttl', 'w', encoding="utf-8")
         for line in template:
             of.write(line)
         of.close
 
     def createCordisProjects(self, entry):
-        output = 'cordis:' + entry[2] + 'a doap:Project ;\n\t' +
-                    'doap:name\t' + entry[2] + ';\n\t'
+        output = ('cordis:' + entry[0] + ' a doap:Project ;\n\t' +
+                    'doap:name\t' + entry[2] + ';\n\t' +
+                    'dc:title\t' + entry[7] + ';\n\t')
         if len(entry[10]) > 1:
             output = output + 'doap:homepage\t' + entry[10] + ';\n\t'
-        
+        output = output + 'doap:description\t' + entry[11] + ';\n\t'
+        return output
+
 
     def transferQuartal(self, year, quartal):
         return str(int(year) + 1*(quartal == '4')) + '-' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '-01'
@@ -124,7 +136,7 @@ def main():
     file = input('Name of .csv file:')
     cr = Csv2Rdf(file)
     if 'cordis' in file:
-        cr.readMultilineInput('ᛥ')
+        cr.createOutput(cr.readMultilineInput('ᛥ'))
     else:
         cr.createOutput(cr.readTextInput(';'))
 
