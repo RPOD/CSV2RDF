@@ -104,23 +104,64 @@ class Csv2Rdf:
         of.close
 
     def createCordisProjects(self, entry):
-        output = ('cordis:' + entry[0] + ' a doap:Project ;\n\t' +
+        output = ('cordis:' + entry[0] + ' a dbc:ResearchProject;\n\t' +
+                    'dbc:projectReferenceID\t' + entry[1] + ';\n\t' +
                     'doap:name\t' + entry[2] + ';\n\t' +
                     'dc:title\t' + entry[7] + ';\n\t')
         if len(entry[10]) > 1:
             output = output + 'doap:homepage\t' + entry[10] + ';\n\t'
         if len(entry[8]) > 1:
-            output = output + ( 'doap:created\t' + entry[8].split('/')[2] + '-' + entry[8].split('/')[0] + '-' + entry[8].split('/')[1] + '^^xsd:date;\n\t' +
-                'dc:PeriodOfTime\t' + str((date(int(entry[9].split('/')[2]), int(entry[9].split('/')[0]), int(entry[9].split('/')[1])) - date(int(entry[8].split('/')[2]), int(entry[8].split('/')[0]), int(entry[8].split('/')[1]))).days) + ';\n\t' )
-        output = output + 'doap:description\t' + entry[11] + ';\n\t'
+            output = output + ( 'dbc:projectStartDate\t' + entry[8].split('/')[2] + '-' + entry[8].split('/')[0] + '-' + entry[8].split('/')[1] + '^^xsd:date;\n\t' +
+                                'dbc:projectEndDate\t' + entry[9].split('/')[2] + '-' + entry[9].split('/')[0] + '-' + entry[9].split('/')[1] + '^^xsd:date;\n\t')
+                #'dc:PeriodOfTime\t' + str((date(int(entry[9].split('/')[2]), int(entry[9].split('/')[0]), int(entry[9].split('/')[1])) - date(int(entry[8].split('/')[2]), int(entry[8].split('/')[0]), int(entry[8].split('/')[1]))).days) + ';\n\t'
+        if len(entry[3]) > 1:
+            output = output + 'cordis:status\t' + self.transcribeStatus(entry[3]) + ';\n\t'
+        output = output + ('cordis:programme\t' + entry[4] + ';\n\t' +
+                           'cordis:frameworkProgramme\t' + entry[6] + ';\n\t' +
+                           'cordis:projectTopics\t' + entry[7])
+        if len(entry[14]) > 1:
+            output = output + 'cordis:projectFundingScheme' + entry[14] + ';\n\t'
+        output = output + ('dbc:projectBudgetTotal\t' + entry[13].replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
+                           'dbc:projectBudgetFunding\t' + entry[12].replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
+                           'dbc:projectCoordinator\t' + entry[16] + ';\n\t' +
+                           'cordis:projectCoordinatorCountry\t' + 'dbr:' + self.alpha2Name(entry[17]) + ';\n\t')
+        if len(entry[18]) > 1:
+            for participant in entry[18].split(';'):
+                output = output + '<http://dbpedia.org/ontology/projectParticipant>\t' + participant + ';\n\t'
+        if len(entry[19]) > 1:
+            for country in entry[19].split(';'):
+                output = output + 'cordis:projectParticipantCountry\t' + 'dbr:' + self.alpha2Name(country) + ';\n\t'
+        if len(entry[20]) > 1:
+            for subject in entry[20].split(';'):
+                output = output + 'cordis:projectSubject\t' + subject + ';\n\t'
+        output = output + 'dbc:projectObjective\t' + entry[11] + ';\n\t.\n\n'
         return output
 
+    def transcribeStatus(self, status):
+        if status == 'ONG':
+            return 'ongoing'
+        elif status == 'CAN':
+            return 'cancelled'
+        else:
+            return 'undefined'
 
     def transferQuartal(self, year, quartal):
         return str(int(year) + 1*(quartal == '4')) + '-' + '0'*(quartal != '3') + str((int(quartal)*3 + 1)%12) + '-01'
 
     def alpha2Name(self, alpha2):
-        return countries.get(alpha2).name
+        if alpha2 == 'UK':
+            alpha2 = 'GB'
+        if alpha2 == 'EL':
+            alpha2 = 'GR'
+        if alpha2 == 'FY':
+            alpha2 = 'NL'
+        if alpha2 == 'KO':
+            alpha2 = 'KR'
+        if alpha2 == 'XK':
+            return 'Kosovo'
+        if alpha2 == 'AN':
+            return 'Netherlands_Antilles'
+        return countries.get(alpha2).name.replace(' ','_')
 
     """
     Testmethod

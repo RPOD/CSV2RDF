@@ -4,6 +4,8 @@
 @prefix dc: 	<http://purl.org/dc/elements/1.1/> .
 @prefix xsd:	<http://www.w3.org/2001/XMLSchema#> .
 @prefix doap:	<http://usefulinc.com/ns/doap#> .
+@prefix dbc:	<http://mappings.dbpedia.org/server/ontology/classes/> .
+@prefix dbr:	<http://dbpedia.org/resource/> .
 
 #---Dataset Prefix
 @prefix cordis: 	<https://open-data.europa.eu/en/data/dataset/cordisfp7projects> .
