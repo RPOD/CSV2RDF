@@ -172,11 +172,11 @@ class Csv2Rdf:
         if len(entry[18]) > 1:
             output = output + 'foaf:lastName\t' + entry[18] + ';\n\t'
         if len(entry[20]) > 1:
-            output = output + 'cordis:phoneNumber\t' + entry[19] + ';\n\t'
+            output = output + 'cordis:phoneNumber\t' + entry[20] + ';\n\t'
         if len(entry[21]) > 1:
-            output = output + 'cordis:faxNumber\t' + entry[20] + ';\n\t'
+            output = output + 'cordis:faxNumber\t' + entry[21] + ';\n\t'
         if len(entry[22]) > 1:
-            output = output + 'foaf:mbox\t' + entry[21] + ';\n\t'
+            output = output + 'foaf:mbox\t' + entry[22] + ';\n\t'
         output = output + '.\n\n'
         return output
 
