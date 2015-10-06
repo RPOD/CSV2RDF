@@ -98,6 +98,9 @@ class Csv2Rdf:
         elif self.filename == 'cordis_projects':
             for entry in data[1:]:
                 template.append(self.createCordisProjects(entry))
+        elif self.filename == 'cordis_organizations':
+            for entry in data[1:]:
+                template.append(self.createCordisOrganizations(entry))
         of = open(self.filename + '_output.ttl', 'w', encoding="utf-8")
         for line in template:
             of.write(line)
@@ -118,7 +121,7 @@ class Csv2Rdf:
             output = output + 'cordis:status\t' + self.transcribeStatus(entry[3]) + ';\n\t'
         output = output + ('cordis:programme\t' + entry[4] + ';\n\t' +
                            'cordis:frameworkProgramme\t' + entry[6] + ';\n\t' +
-                           'cordis:projectTopics\t' + entry[7])
+                           'cordis:projectTopics\t' + entry[7] + ';\n\t')
         if len(entry[14]) > 1:
             output = output + 'cordis:projectFundingScheme' + entry[14] + ';\n\t'
         output = output + ('dbc:projectBudgetTotal\t' + entry[13].replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
@@ -137,6 +140,52 @@ class Csv2Rdf:
         output = output + 'dbc:projectObjective\t' + entry[11] + ';\n\t.\n\n'
         return output
 
+    def createCordisOrganizations(self, entry):
+        output = ('cordis:' + entry[6] + entry[0] + ' a dbc:Organisation, dbc:ResearchProject;\n\t' +
+                  'dbc:projectReferenceID\t' + entry[1] + ';\n\t' +
+                  'doap:name\t' + entry[2] + ';\n\t' +
+                  'cordis:role\t' + entry[3] + ';\n\t' +
+                  'cordis:organizationName\t' + entry[5] + ';\n\t' +
+                  'cordis:organizationShortName\t' + entry[6] + ';\n\t')
+        if len(entry[10]) > 1:
+            output = output + 'cordis:organizationCountry\tdbr:' + self.alpha2Name(entry[10]) + ';\n\t'
+        if len(entry[7]) > 1:
+            output = output + 'cordis:activityType\t' + entry[7] + ';\n\t'
+        if len(entry[8]) > 1:
+            output = output + 'dbc:projectBudgetFunding\t' + str(self.setYesNoBool(entry[8])) + ';\n\t'
+        if len(entry[10]) > 1:
+            output = output + 'foaf:title\t' + entry[10] + '^^<http://dbpedia.org/datatype/euro>;\n\t'
+        if len(entry[12]) > 1:
+            output = output + 'dbc:locationCity\t' + entry[12] + ';\n\t'
+        if len(entry[11]) > 1:
+            output = output + 'cordis:locationStreet\t' + entry[11] + ';\n\t'
+        if len(entry[13]) > 1:
+            output = output + '<http://dbpedia.org/ontology/postalCode>\t' + entry[13] + ';\n\t'
+        if len(entry[14]) > 1:
+            output = output + 'cordis:organizationHomepage\t' + entry[14] + ';\n\t'
+        if len(entry[15]) > 1:
+            output = output + 'cordis:contactType\t' + entry[15] +';\n\t'
+        if len(entry[16]) > 1:
+            output = output + 'foaf:title\t' + entry[16] + ';\n\t'
+        if len(entry[17]) > 1:
+            output = output + 'foaf:firstName\t' + entry[17] + ';\n\t'
+        if len(entry[18]) > 1:
+            output = output + 'foaf:lastName\t' + entry[18] + ';\n\t'
+        if len(entry[20]) > 1:
+            output = output + 'cordis:phoneNumber\t' + entry[19] + ';\n\t'
+        if len(entry[21]) > 1:
+            output = output + 'cordis:faxNumber\t' + entry[20] + ';\n\t'
+        if len(entry[22]) > 1:
+            output = output + 'foaf:mbox\t' + entry[21] + ';\n\t'
+        output = output + '.\n\n'
+        return output
+
+    def setYesNoBool(self, yn):
+        if yn == 'yes':
+            return True
+        else:
+            return False
+
     def transcribeStatus(self, status):
         if status == 'ONG':
             return 'ongoing'
@@ -154,7 +203,7 @@ class Csv2Rdf:
         if alpha2 == 'EL':
             alpha2 = 'GR'
         if alpha2 == 'FY':
-            alpha2 = 'NL'
+            alpha2 = 'MK'
         if alpha2 == 'KO':
             alpha2 = 'KR'
         if alpha2 == 'XK':
