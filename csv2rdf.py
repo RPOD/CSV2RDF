@@ -154,7 +154,7 @@ class Csv2Rdf:
         if len(entry[8]) > 1:
             output = output + 'cordis:endOfParticipation\t' + str(self.setYesNoBool(entry[8])) + ';\n\t'
         if len(entry[9]) > 1:
-            output = output + 'dbc:projectBudgetFunding\t' + entry[11] + '^^<http://dbpedia.org/datatype/euro>;\n\t'
+            output = output + 'dbc:projectBudgetFunding\t' + entry[9] + '^^<http://dbpedia.org/datatype/euro>;\n\t'
         if len(entry[12]) > 1:
             output = output + 'dbc:locationCity\t' + entry[12] + ';\n\t'
         if len(entry[11]) > 1:
