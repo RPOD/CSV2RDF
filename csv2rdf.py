@@ -223,6 +223,7 @@ class Csv2Rdf:
         org.postalCode = entry[13]
         org.street = entry[11]
         org.homepage = (entry[14][:4] != 'http')*'http://' + entry[14]
+        org.contact = entry[17] + '_' + entry[18]
         return org
 
     def parseCordisPerson(self, entry):
@@ -275,12 +276,47 @@ class Csv2Rdf:
             for subject in project.subjects:
                 output = output + 'cordis:projectSubject\t' + subject + ';\n\t'
         output = output + 'dbc:projectObjective\t' + entry[11] + ';\n\t.\n\n'
+        return output
 
     def createOrganizationOutput(self, organization):
-
+        output = ('cordis:' + entry[5] + ' a foaf:organization, dbc:Organisation;\n\t' +
+                  'cordis:organizationName\t' + organization.name + ';\n\t' +
+                  'cordis:organizationShortName\t' + organization.shortName + ';\n\t')
+        if len(organization.country) > 1:
+            output = output + 'cordis:organizationCountry\tdbr:' + organization.country + ';\n\t'
+        if len(organization.activityType) > 1:
+            output = output + 'cordis:activityType\t' + organization.activityType + ';\n\t'
+        if len(organization.endOfParticipation) > 1:
+            output = output + 'cordis:endOfParticipation\t' + organization.endOfParticipation + ';\n\t'
+        if len(organization.city) > 1:
+            output = output + 'dbc:locationCity\t' + '<http://dbpedia.org/page/' + self.capitalizeAll(organization.city) + '>;\n\t'
+        if len(organization.street) > 1:
+            output = output + 'dbo:address\t' + organization.street + ';\n\t'
+        if len(organization.postalCode) > 1:
+            output = output + 'dbo:postalCode\t' + organization.postalCode + ';\n\t'
+        if len(organization.homepage) > 1:
+            output = output + 'cordis:organizationHomepage\t' + organization.homepage + ';\n\t'
+        if len(organization.contact) > 1:
+            output = output + 'foaf:person\tcordis:' + organization.contact
+        output = output + '.\n\n'
+        return output
 
     def createPersonOutput(self, person):
-
+        output = 'cordis:'
+        if len(person.title) > 1:
+            output = output + 'foaf:title\t' + person.title + ';\n\t'
+        if len(person.firstName) > 1:
+            output = output + 'foaf:firstName\t' + person.firstName + ';\n\t'
+        if len(person.lastName) > 1:
+            output = output + 'foaf:lastName\t' + person.lastName + ';\n\t'
+        if len(person.phone) > 1:
+            output = output + 'foaf:phone\t' + person.phone + ';\n\t'
+        if len(person.fax) > 1:
+            output = output + 'cordis:faxNumber\t' + person.fax + ';\n\t'
+        if len(person.mail) > 1:
+            output = output + 'foaf:mbox\t' + person.mail + ';\n\t'
+        output = output + '.\n\n'
+        return output
 
     def setLiterals(self, string):
         return (string[0] != '"') * '"' + string + (string[-1] != '"') * '"'

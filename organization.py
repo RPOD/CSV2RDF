@@ -13,3 +13,4 @@ class Organization(object):
     postalCode = ''
     street = ''
     homepage = ''
+    contact = ''
