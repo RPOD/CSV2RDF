@@ -4,6 +4,7 @@ from datetime import date
 from organization import Organization
 from project import Project
 from person import Person
+from collections import namedtuple
 
 class Csv2Rdf:
 
@@ -184,10 +185,12 @@ class Csv2Rdf:
         return output
 
     def parseCordisProject(self, entry):
-        project = Project()
+        Project = namedtuple('Project', 'identifier, referenceID, name, title, homepage, startDate, endDate, status, programme, frameworkProgramme, topics, fundingScheme, budgetTotal, budgetFunding, coordinator, participants, subjects, objective')
+        project = []
         project.identifier = entry[0]
         project.referenceID = entry[1]
         project.name = entry[2]
+        project.title = entry[7]
         project.homepage = entry[10]
         project.startDate = entry[8]
         project.endDate = entry[9]
@@ -205,7 +208,7 @@ class Csv2Rdf:
         project.objective = entry[11]
         for participant in entry[18].split(';'):
             project.participants.append(participant.replace(' ', '_'))
-        return project
+        return self.createProjectOutput(project)
 
     def parseCordisOrganization(self, entry):
         org = Organization()
@@ -224,7 +227,7 @@ class Csv2Rdf:
         org.street = entry[11]
         org.homepage = (entry[14][:4] != 'http')*'http://' + entry[14]
         org.contact = entry[17].replace(' ', '_') + '_' + entry[18].replace(' ', '_')
-        return org
+        return [self.createOrganizationOutput(org), org.name]
 
     def parseCordisPerson(self, entry):
         person = Person()
@@ -235,7 +238,7 @@ class Csv2Rdf:
         person.phone = entry[20]
         person.fax = entry[21]
         person.mail = entry[22]
-        return person
+        return [self.createPersonOutput(person), person.fistName + person.lastName]
 
     def createCordisObjects(self, projectsData, organizationData):
         template = self.readTemplate(self.filename + '_template.ttl')
@@ -244,33 +247,28 @@ class Csv2Rdf:
         persons = []
         usedOrgs = []
         usedPers = []
+        output = ''
+        print('start')
         of = open('full_cordis.ttl', 'w', encoding="utf-8")
         for line in template:
-            of.write(line)
-        for project in projectsData[1:]:
-            projects.append(self.parseCordisProject(project))
-        for pro in projects:
-            #template.append(self.createProjectOutput(pro))
-            for line in self.createProjectOutput(pro):
-                of.write(line)
-            print('foo')
+            output = output + line
+        for i, project in enumerate(projectsData[1:]):
+            for line in self.parseCordisProject(project):
+                output = output + line
+            print(i)
+        write(output)
         for organization in organizationData[1:]:
-            organizations.append(self.parseCordisOrganization(organization))
-            persons.append(self.parseCordisPerson(organization))
-        for org in organizations:
-            if (not org.name in usedOrgs):
-                #template.append(self.createOrganizationOutput(org))
-                for line in self.createOrganizationOutput(org):
+            org = self.parseCordisOrganization(organization)
+            print('foo')
+            if (not org[1] in usedOrgs):
+                for line in org[0]:
                     of.write(line)
-                usedOrgs.append(org.name)
-                print('bar')
-        for per in persons:
-            if (not (per.firstName + per.lastName) in usedPers):
-                #template.append(self.createPersonOutput(per))
-                for line in self.createPersonOutput(per):
+                usedOrgs.append(org[1])
+            per = self.parseCordisPerson(organization)
+            if (not per[1] in usedPers):
+                for line in per[0]:
                     of.write(line)
-                usedPers.append(per.firstName + per.lastName)
-                print('baz')
+                usedPers.append(per[1])
         of.close
 
     def createProjectOutput(self, project):
