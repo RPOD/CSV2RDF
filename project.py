@@ -8,8 +8,13 @@ class Project(object):
     startDate = ''
     endDate = ''
     status = ''
+    programme = ''
     frameworkProgramme = ''
     topics = ''
     fundingScheme = ''
     budgetTotal = ''
     budgetFunding = ''
+    coordinator = None
+    participants = []
+    subjects = []
+    objective = ''

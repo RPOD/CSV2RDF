@@ -148,7 +148,7 @@ class Csv2Rdf:
                   'dbc:projectReferenceID\t' + self.setLiterals(entry[1]) + ';\n\t' +
                   'doap:name\t' + self.setLiterals(entry[2]) + ';\n\t'
                   # 'cordis:role\t' + entry[3] + ';\n\t'
-                                                               'foaf:organization\t [cordis:organizationName\t' + self.setLiterals(entry[5]) + ';\n\t\t' +
+                  'foaf:organization\t [cordis:organizationName\t' + self.setLiterals(entry[5]) + ';\n\t\t' +
                   'cordis:organizationShortName\t' + self.setLiterals(entry[6]) + ';\n\t\t')
         if len(entry[10]) > 1:
             output = output + 'cordis:organizationCountry\tdbr:' + self.alpha2Name(entry[10]) + ';\n\t\t'
@@ -191,12 +191,20 @@ class Csv2Rdf:
         project.homepage = entry[10]
         project.startDate = entry[8]
         project.endDate = entry[9]
-        project.status = self.transcribeStatus(entry[3])
+        if len(entry[3]) > 1:
+            project.status = self.transcribeStatus(entry[3])
+        project.programme = entry[4]
         project.frameworkProgramme = entry[6]
         project.topics = entry[5]
         project.fundingScheme = entry[14]
         project.budgetTotal = entry[12]
         project.budgetFunding = entry[13]
+        project.coordinator = entry[16]
+        for subject in entry[20].split(';'):
+            project.subjects.append(subject)
+        project.objective = entry[11]
+        for participant in entry[18].split(';'):
+            project.participants.append(participant)
         return project
 
     def parseCordisOrganization(self, entry):
@@ -229,6 +237,7 @@ class Csv2Rdf:
         return person
 
     def createCordisObjects(self, projectsData, organizationData):
+        template = self.readTemplate(self.filename + '_template.ttl')
         projects = []
         organizations = []
         persons = []
@@ -237,12 +246,41 @@ class Csv2Rdf:
         for organization in organizationData[1:]:
             organizations.append(self.parseCordisOrganization(organization))
             persons.append(self.parseCordisPerson(organization))
-        for pro in projects:
-            print(pro)
-        for org in organizations:
-            print(org)
-        for per in persons:
-            print(per)
+
+    def createProjectOutput(self, project):
+        output = ('cordis:' + project.identifier + ' a dbc:ResearchProject;\n\t' +
+                  'dbo:projectReferenceID\t' + project.referenceID + ';\n\t' +
+                  'doap:name\t' + project.name + ';\n\t' +
+                  'rdfs:label\t' + project.name + ';\n\t' +
+                  'dc:title\t' + project.title + ';\n\t')
+        if len(project.homepage) > 1:
+            output = output + 'doap:homepage\t' + project.homepage + ';\n\t'
+        if len(project.startDate) > 1:
+            output = output + ( 'dbo:projectStartDate\t' + project.startDate.split('/')[2] + '-' + project.startDate.split('/')[0] + '-' + project.startDate.split('/')[1] + '^^xsd:date;\n\t' +
+                                'dbo:projectEndDate\t' + project.endDate.split('/')[2] + '-' + project.endDate.split('/')[0] + '-' + project.endDate.split('/')[1] + '^^xsd:date;\n\t')
+        if len(project.status) > 1:
+            output = output + 'cordis:status\t' + project.status + ';\n\t'
+        output = output + ('cordis:programme\t' + project.programme + ';\n\t' +
+                           'cordis:frameworkProgramme\t' + project.frameworkProgramme + ';\n\t' +
+                           'cordis:projectTopics\t' + project.topics + ';\n\t')
+        if len(entry[14]) > 1:
+            output = output + 'cordis:projectFundingScheme' + project.fundingScheme + ';\n\t'
+        output = output + ('dbo:projectBudgetFunding\t' + project.budgetFunding.replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
+                           'dbo:projectBudgetTotal\t' + project.budgetTotal.replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
+                           'dbo:projectCoordinator\tcordis:' + project.coordinator + ';\n\t')
+        if len(project.participants) > 1:
+            for participant in project.participants:
+                output = output + 'dbo:projectParticipant\tcordis:' + participant + ';\n\t'
+        if len(project.subjects) > 1:
+            for subject in project.subjects:
+                output = output + 'cordis:projectSubject\t' + subject + ';\n\t'
+        output = output + 'dbc:projectObjective\t' + entry[11] + ';\n\t.\n\n'
+
+    def createOrganizationOutput(self, organization):
+
+
+    def createPersonOutput(self, person):
+
 
     def setLiterals(self, string):
         return (string[0] != '"') * '"' + string + (string[-1] != '"') * '"'
