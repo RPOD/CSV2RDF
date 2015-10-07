@@ -10,5 +10,6 @@ class Organization(object):
     activityType = ''
     endOfParticipation = ''
     city = ''
+    postalCode = ''
     street = ''
     homepage = ''
