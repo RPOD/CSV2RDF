@@ -199,12 +199,12 @@ class Csv2Rdf:
         project.fundingScheme = entry[14]
         project.budgetTotal = entry[12]
         project.budgetFunding = entry[13]
-        project.coordinator = entry[16]
+        project.coordinator = entry[16].replace(' ', '_')
         for subject in entry[20].split(';'):
             project.subjects.append(subject)
         project.objective = entry[11]
         for participant in entry[18].split(';'):
-            project.participants.append(participant)
+            project.participants.append(participant.replace(' ', '_'))
         return project
 
     def parseCordisOrganization(self, entry):
@@ -223,7 +223,7 @@ class Csv2Rdf:
         org.postalCode = entry[13]
         org.street = entry[11]
         org.homepage = (entry[14][:4] != 'http')*'http://' + entry[14]
-        org.contact = entry[17] + '_' + entry[18]
+        org.contact = entry[17].replace(' ', '_') + '_' + entry[18].replace(' ', '_')
         return org
 
     def parseCordisPerson(self, entry):
@@ -242,11 +242,36 @@ class Csv2Rdf:
         projects = []
         organizations = []
         persons = []
+        usedOrgs = []
+        usedPers = []
+        of = open('full_cordis.ttl', 'w', encoding="utf-8")
+        for line in template:
+            of.write(line)
         for project in projectsData[1:]:
             projects.append(self.parseCordisProject(project))
+        for pro in projects:
+            #template.append(self.createProjectOutput(pro))
+            for line in self.createProjectOutput(pro):
+                of.write(line)
+            print('foo')
         for organization in organizationData[1:]:
             organizations.append(self.parseCordisOrganization(organization))
             persons.append(self.parseCordisPerson(organization))
+        for org in organizations:
+            if (not org.name in usedOrgs):
+                #template.append(self.createOrganizationOutput(org))
+                for line in self.createOrganizationOutput(org):
+                    of.write(line)
+                usedOrgs.append(org.name)
+                print('bar')
+        for per in persons:
+            if (not (per.firstName + per.lastName) in usedPers):
+                #template.append(self.createPersonOutput(per))
+                for line in self.createPersonOutput(per):
+                    of.write(line)
+                usedPers.append(per.firstName + per.lastName)
+                print('baz')
+        of.close
 
     def createProjectOutput(self, project):
         output = ('cordis:' + project.identifier + ' a dbc:ResearchProject;\n\t' +
@@ -264,7 +289,7 @@ class Csv2Rdf:
         output = output + ('cordis:programme\t' + project.programme + ';\n\t' +
                            'cordis:frameworkProgramme\t' + project.frameworkProgramme + ';\n\t' +
                            'cordis:projectTopics\t' + project.topics + ';\n\t')
-        if len(entry[14]) > 1:
+        if len(project.fundingScheme) > 1:
             output = output + 'cordis:projectFundingScheme' + project.fundingScheme + ';\n\t'
         output = output + ('dbo:projectBudgetFunding\t' + project.budgetFunding.replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
                            'dbo:projectBudgetTotal\t' + project.budgetTotal.replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
@@ -275,7 +300,7 @@ class Csv2Rdf:
         if len(project.subjects) > 1:
             for subject in project.subjects:
                 output = output + 'cordis:projectSubject\t' + subject + ';\n\t'
-        output = output + 'dbc:projectObjective\t' + entry[11] + ';\n\t.\n\n'
+        output = output + 'dbc:projectObjective\t' + project.objective + ';\n\t.\n\n'
         return output
 
     def createOrganizationOutput(self, organization):
