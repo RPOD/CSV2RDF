@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from iso3166 import countries
 from datetime import date
+from organization import organization
+from project import Project
+from person import Person
 
 class Csv2Rdf:
 
@@ -121,11 +124,11 @@ class Csv2Rdf:
             output = output + 'cordis:status\t' + self.transcribeStatus(entry[3]) + ';\n\t'
         output = output + ('cordis:programme\t' + entry[4] + ';\n\t' +
                            'cordis:frameworkProgramme\t' + entry[6] + ';\n\t' +
-                           'cordis:projectTopics\t' + entry[7] + ';\n\t')
+                           'cordis:projectTopics\t' + entry[5] + ';\n\t')
         if len(entry[14]) > 1:
             output = output + 'cordis:projectFundingScheme' + entry[14] + ';\n\t'
-        output = output + ('dbc:projectBudgetTotal\t' + entry[13].replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
-                           'dbc:projectBudgetFunding\t' + entry[12].replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
+        output = output + ('dbc:projectBudgetFunding\t' + entry[13].replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
+                           'dbc:projectBudgetTotal\t' + entry[12].replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
                            'dbc:projectCoordinator\t' + entry[16] + ';\n\t' +
                            'cordis:projectCoordinatorCountry\t' + 'dbr:' + self.alpha2Name(entry[17]) + ';\n\t')
         if len(entry[18]) > 1:
@@ -141,30 +144,30 @@ class Csv2Rdf:
         return output
 
     def createCordisOrganizations(self, entry):
-        output = ('cordis:' + entry[6] + entry[0] + ' a dbc:Organisation, dbc:ResearchProject;\n\t' +
-                  'dbc:projectReferenceID\t' + entry[1] + ';\n\t' +
-                  'doap:name\t' + entry[2] + ';\n\t' +
-                  'cordis:role\t' + entry[3] + ';\n\t' +
-                  'cordis:organizationName\t' + entry[5] + ';\n\t' +
-                  'cordis:organizationShortName\t' + entry[6] + ';\n\t')
+        output = ('cordis:' + entry[6] + entry[0] + ' a dbc:ResearchProject, doap:project, rdf:type;\n\t' +
+                  'dbc:projectReferenceID\t' + self.setLiterals(entry[1]) + ';\n\t' +
+                  'doap:name\t' + self.setLiterals(entry[2]) + ';\n\t'
+                # 'cordis:role\t' + entry[3] + ';\n\t'
+                  'foaf:organization\t [cordis:organizationName\t' + self.setLiterals(entry[5]) + ';\n\t\t' +
+                  'cordis:organizationShortName\t' + self.setLiterals(entry[6]) + ';\n\t\t')
         if len(entry[10]) > 1:
-            output = output + 'cordis:organizationCountry\tdbr:' + self.alpha2Name(entry[10]) + ';\n\t'
+            output = output + 'cordis:organizationCountry\tdbr:' + self.alpha2Name(entry[10]) + ';\n\t\t'
         if len(entry[7]) > 1:
-            output = output + 'cordis:activityType\t' + entry[7] + ';\n\t'
+            output = output + 'cordis:activityType\t' + entry[7] + ';\n\t\t'
         if len(entry[8]) > 1:
-            output = output + 'cordis:endOfParticipation\t' + str(self.setYesNoBool(entry[8])) + ';\n\t'
+            output = output + 'cordis:endOfParticipation\t' + entry[8] + ';\n\t\t'
         if len(entry[9]) > 1:
-            output = output + 'dbc:projectBudgetFunding\t' + entry[9] + '^^<http://dbpedia.org/datatype/euro>;\n\t'
+            output = output + 'dbc:projectBudgetFunding\t' + entry[9].split('.')[0] + '^^<http://dbpedia.org/datatype/euro>;\n\t\t'
         if len(entry[12]) > 1:
-            output = output + 'dbc:locationCity\t' + entry[12] + ';\n\t'
+            output = output + 'dbc:locationCity\t' + '<http://dbpedia.org/page/' + self.capitalizeAll(entry[12]) + '>;\n\t'
         if len(entry[11]) > 1:
-            output = output + 'cordis:locationStreet\t' + entry[11] + ';\n\t'
+            output = output + 'dbo:address\t' + entry[11] + ';\n\t'
         if len(entry[13]) > 1:
             output = output + '<http://dbpedia.org/ontology/postalCode>\t' + entry[13] + ';\n\t'
         if len(entry[14]) > 1:
-            output = output + 'cordis:organizationHomepage\t' + entry[14] + ';\n\t'
-        if len(entry[15]) > 1:
-            output = output + 'cordis:contactType\t' + entry[15] +';\n\t'
+            output = output + 'cordis:organizationHomepage\t' + (entry[14][:4] != 'http')*'http://' + entry[14] + ';\n\t'
+       # if len(entry[15]) > 1:
+       #     output = output + 'cordis:contactType\t' + entry[15] +';\n\t'
         if len(entry[16]) > 1:
             output = output + 'foaf:title\t' + entry[16] + ';\n\t'
         if len(entry[17]) > 1:
@@ -172,12 +175,20 @@ class Csv2Rdf:
         if len(entry[18]) > 1:
             output = output + 'foaf:lastName\t' + entry[18] + ';\n\t'
         if len(entry[20]) > 1:
-            output = output + 'cordis:phoneNumber\t' + entry[20] + ';\n\t'
+            output = output + 'foaf:phone\t' + entry[20] + ';\n\t'
         if len(entry[21]) > 1:
             output = output + 'cordis:faxNumber\t' + entry[21] + ';\n\t'
         if len(entry[22]) > 1:
             output = output + 'foaf:mbox\t' + entry[22] + ';\n\t'
         output = output + '.\n\n'
+        return output
+
+    def setLiterals(self, string):
+        return (string[0] != '"') * '"' + string + (string[-1] != '"') * '"'
+
+    def capitalizeAll(self, string):
+        for word in string.split(' '):
+            output = output + word.capitalize()
         return output
 
     def setYesNoBool(self, yn):
