@@ -1,0 +1,17 @@
+@prefix owl: 	<http://www.w3.org/2002/07/owl#> .
+@prefix rdf: 	<http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: 	<http://purl.org/dc/elements/1.1/> .
+@prefix xsd:	<http://www.w3.org/2001/XMLSchema#> .
+@prefix foaf: 	<http://xmlns.com/foaf/0.1/> .
+@prefix doap:	<http://usefulinc.com/ns/doap#> .
+@prefix dbo:	<http://mappings.dbpedia.org/server/ontology/> .
+@prefix dbc:	<http://mappings.dbpedia.org/ontology/classes/> .
+@prefix dpro:	<http://mappings.dbpedia.org/ontology/classes/ResearchProject#> .
+@prefix dorg:	<http://mappings.dbpedia.org/ontology/classes/Organisation#> .
+@prefix dbr:	<http://dbpedia.org/resource/> .
+
+#---Dataset Prefix
+@prefix cordis: 	<http://www.freme-project.eu/datasets/cordis/> .
+
+

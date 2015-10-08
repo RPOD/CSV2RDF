@@ -5,6 +5,7 @@ from organization import Organization
 from project import Project
 from person import Person
 from collections import namedtuple
+from urllib import parse
 
 class Csv2Rdf:
 
@@ -184,7 +185,7 @@ class Csv2Rdf:
         output = output + '.\n\n'
         return output
 
-    def parseCordisProject(self, entry):
+    def parseCordisProject(self, entry, hostBene):
         Project = namedtuple('Project', 'identifier, referenceID, name, title, homepage, startDate, endDate, status, programme, frameworkProgramme, topics, fundingScheme, budgetTotal, budgetFunding, coordinator, participants, subjects, objective')
         project = []
         project.append(entry[0])
@@ -204,17 +205,17 @@ class Csv2Rdf:
         project.append(entry[14])
         project.append(entry[12])
         project.append(entry[13])
-        project.append(entry[16].replace(' ', '_'))
+        project.append(entry[16])
         tmp = []
         for participant in entry[18].split(';'):
-            tmp.append(participant.replace(' ', '_'))
+            tmp.append(participant)
         project.append(tmp)
         tmp2 = []
         for subject in entry[20].split(';'):
             tmp2.append(subject)
         project.append(tmp2)
         project.append(entry[11])
-        return self.createProjectOutput(Project(*project))
+        return self.createProjectOutput(Project(*project), hostBene)
 
     def parseCordisOrganization(self, entry):
         Organization = namedtuple('Organization', 'identifier, referenceID, projectName, role, name, shortName, country, activityType, endOfParticipation, city, postalCode, street, homepage, contact')
@@ -235,12 +236,12 @@ class Csv2Rdf:
         org.append(entry[13])
         org.append( entry[11])
         org.append((entry[14][:4] != 'http')*'http://' + entry[14])
-        org.append(entry[17].replace(' ', '_') + '_' + entry[18].replace(' ', '_'))
+        org.append(parse.quote_plus(entry[17] + entry[18] + entry[6]))
         output = Organization(*org)
-        return [self.createOrganizationOutput(output), output.name]
+        return [self.createOrganizationOutput(output), output.name, [output.role, output.identifier, output.name]]
 
     def parseCordisPerson(self, entry):
-        Person = namedtuple('Person', 'type, title, firstName, lastName, phone, fax, mail')
+        Person = namedtuple('Person', 'type, title, firstName, lastName, phone, fax, mail, shortOrgName')
         person = []
         person.append(entry[15])
         person.append(entry[16])
@@ -249,111 +250,123 @@ class Csv2Rdf:
         person.append(entry[20])
         person.append(entry[21])
         person.append(entry[22])
+        person.append(entry[6])
         output = Person(*person)
-        return [self.createPersonOutput(output), output.firstName + output.lastName]
+        return [self.createPersonOutput(output)]
 
     def createCordisObjects(self, projectsData, organizationData):
-        template = self.readTemplate(self.filename + '_template.ttl')
-        projects = []
-        organizations = []
-        persons = []
+        template = self.readTemplate('cordis_full_template.ttl')
+        #projects = []
+        #organizations = []
+        #persons = []
         usedOrgs = []
-        usedPers = []
-        output = ''
+        hostBene = []
+        #usedPers = []
+        #output = ''
         print('start')
         of = open('full_cordis.ttl', 'w', encoding="utf-8")
         for line in template:
             of.write(line)
-        for i, project in enumerate(projectsData[1:]):
-            for line in self.parseCordisProject(project):
-                of.write(line)
-            print(i)
         for i, organization in enumerate(organizationData[1:]):
             org = self.parseCordisOrganization(organization)
+            per = self.parseCordisPerson(organization)
             if (not org[1] in usedOrgs):
                 for line in org[0]:
                     of.write(line)
                 usedOrgs.append(org[1])
-            per = self.parseCordisPerson(organization)
-            if (not per[1] in usedPers):
                 for line in per[0]:
                     of.write(line)
-                usedPers.append(per[1])
+                if org[2][0] == 'hostInstitution' or org[2][0] == 'beneficiary':
+                    hostBene.append(org[2])
+            print(i)
+        for i, project in enumerate(projectsData[1:]):
+            for line in self.parseCordisProject(project, hostBene):
+                of.write(line)
             print(i)
         of.close
 
-    def createProjectOutput(self, project):
-        output = ('cordis:' + project.identifier + ' a dbc:ResearchProject;\n\t' +
-                  'dbo:projectReferenceID\t' + project.referenceID + ';\n\t' +
-                  'doap:name\t' + project.name + ';\n\t' +
-                  'rdfs:label\t' + project.name + ';\n\t' +
-                  'dc:title\t' + project.title + ';\n\t')
+    def createProjectOutput(self, project, hostBene):
+        output = ('cordis:projects/' + project.identifier + ' a dbo:ResearchProject;\n\t' +
+                  'dpro:projectReferenceID\t"' + self.setLiterals(project.referenceID) + '";\n\t' +
+                  'doap:name\t"' + self.setLiterals(project.name) + '";\n\t' +
+                  'rdfs:label\t"' + self.setLiterals(project.name) + '";\n\t' +
+                  'dc:title\t"' + self.setLiterals(project.title) + '";\n\t')
         if len(project.homepage) > 1:
-            output = output + 'doap:homepage\t' + project.homepage + ';\n\t'
+            output = output + 'doap:homepage\t<' + project.homepage + '>;\n\t'
         if len(project.startDate) > 1:
-            output = output + ( 'dbo:projectStartDate\t' + project.startDate.split('/')[2] + '-' + project.startDate.split('/')[0] + '-' + project.startDate.split('/')[1] + '^^xsd:date;\n\t' +
-                                'dbo:projectEndDate\t' + project.endDate.split('/')[2] + '-' + project.endDate.split('/')[0] + '-' + project.endDate.split('/')[1] + '^^xsd:date;\n\t')
+            output = output + ( 'dbo:projectStartDate\t"' + project.startDate.split('/')[2] + '-' + project.startDate.split('/')[0] + '-' + project.startDate.split('/')[1] + '"^^xsd:date;\n\t' +
+                                'dbo:projectEndDate\t"' + project.endDate.split('/')[2] + '-' + project.endDate.split('/')[0] + '-' + project.endDate.split('/')[1] + '"^^xsd:date;\n\t')
         if len(project.status) > 1:
-            output = output + 'cordis:status\t' + project.status + ';\n\t'
-        output = output + ('cordis:programme\t' + project.programme + ';\n\t' +
-                           'cordis:frameworkProgramme\t' + project.frameworkProgramme + ';\n\t' +
-                           'cordis:projectTopics\t' + project.topics + ';\n\t')
+            output = output + 'cordis:status\t"' + project.status + '";\n\t'
+        output = output + ('cordis:programme\t"' + self.setLiterals(project.programme) + '";\n\t' +
+                           'cordis:frameworkProgramme\t"' + self.setLiterals(project.frameworkProgramme) + '";\n\t' +
+                           'cordis:projectTopics\t"' + self.setLiterals(project.topics) + '";\n\t')
         if len(project.fundingScheme) > 1:
-            output = output + 'cordis:projectFundingScheme\t' + project.fundingScheme + ';\n\t'
+            output = output + 'cordis:projectFundingScheme\t"' + project.fundingScheme + '";\n\t'
         output = output + ('dbo:projectBudgetFunding\t' + project.budgetFunding.replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
                            'dbo:projectBudgetTotal\t' + project.budgetTotal.replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
-                           'dbo:projectCoordinator\tcordis:' + project.coordinator + ';\n\t')
+                           'dbo:projectCoordinator\tcordis:organizations/' + parse.quote_plus(project.coordinator) + ';\n\t')
         if len(project.participants) > 1:
             for participant in project.participants:
-                output = output + 'dbo:projectParticipant\tcordis:' + participant + ';\n\t'
+                output = output + 'dbo:projectParticipant\tcordis:organizations/' + parse.quote_plus(participant) + ';\n\t'
+        for org in hostBene:
+            if project.identifier == org[1]:
+                if org[0] == 'hostInstitution':
+                    output = output + 'cordis:hostInstitution\tcordis:organizations/' + parse.quote_plus(org[2]) + ';\n\t'
+                elif org[0] == 'beneficiary':
+                    output = output + 'cordis:beneficiary\tcordis:organizations/' + parse.quote_plus(org[2]) + ';\n\t'
         if len(project.subjects) > 1:
             for subject in project.subjects:
-                output = output + 'cordis:projectSubject\t' + subject + ';\n\t'
-        output = output + 'dbc:projectObjective\t' + project.objective + ';\n\t.\n\n'
+                output = output + 'cordis:projectSubject\t"' + subject + '";\n\t'
+        output = output + 'dbo:projectObjective\t"' + self.setLiterals(project.objective) + '";\n\t.\n\n'
         return output
 
     def createOrganizationOutput(self, organization):
-        output = ('cordis:' + organization.name + ' a foaf:organization, dbc:Organisation;\n\t' +
-                  'cordis:organizationName\t' + organization.name + ';\n\t' +
-                  'cordis:organizationShortName\t' + organization.shortName + ';\n\t')
+        output = ('cordis:organizations/' + parse.quote_plus(organization.name) + ' a foaf:Organization, dbo:Organisation;\n\t' +
+                  'cordis:organizationName\t"' + self.setLiterals(organization.name) + '";\n\t' +
+                  'cordis:organizationShortName\t"' + self.setLiterals(organization.shortName) + '";\n\t')
         if len(organization.country) > 1:
-            output = output + 'cordis:organizationCountry\tdbr:' + organization.country + ';\n\t'
+            output = output + 'cordis:organizationCountry\tdbr:"' + organization.country + '";\n\t'
         if len(organization.activityType) > 1:
-            output = output + 'cordis:activityType\t' + organization.activityType + ';\n\t'
+            output = output + 'cordis:activityType\t"' + self.setLiterals(organization.activityType) + '";\n\t'
         if len(organization.endOfParticipation) > 1:
-            output = output + 'cordis:endOfParticipation\t' + organization.endOfParticipation + ';\n\t'
+            output = output + 'cordis:endOfParticipation\t"' + self.setLiterals(organization.endOfParticipation) + '";\n\t'
         if len(organization.city) > 1:
-            output = output + 'dbc:locationCity\t' + '<http://dbpedia.org/page/' + self.capitalizeAll(organization.city) + '>;\n\t'
+            output = output + 'dbo:locationCity\t<' + organization.city + '>;\n\t'
         if len(organization.street) > 1:
-            output = output + 'dbo:address\t' + organization.street + ';\n\t'
+            output = output + 'dbo:address\t"' + self.setLiterals(organization.street) + '";\n\t'
         if len(organization.postalCode) > 1:
-            output = output + 'dbo:postalCode\t' + organization.postalCode + ';\n\t'
+            output = output + 'dbo:postalCode\t"' + self.setLiterals(organization.postalCode) + '";\n\t'
         if len(organization.homepage) > 1:
-            output = output + 'cordis:organizationHomepage\t' + organization.homepage + ';\n\t'
+            output = output + 'foaf:homepage\t<' + self.setLiterals(organization.homepage) + '>;\n\t'
         if len(organization.contact) > 1:
-            output = output + 'foaf:person\tcordis:' + organization.contact
+            output = output + 'foaf:person\tcordis:people/' + organization.contact
         output = output + '.\n\n'
         return output
 
     def createPersonOutput(self, person):
-        output = 'cordis:'
+        output = 'cordis:people/' + parse.quote_plus(person.firstName + person.lastName + person.shortOrgName) + ' a foaf:Person;\n\t'
         if len(person.title) > 1:
-            output = output + 'foaf:title\t' + person.title + ';\n\t'
+            output = output + 'foaf:title\t"' + self.setLiterals(person.title) + '";\n\t'
         if len(person.firstName) > 1:
-            output = output + 'foaf:firstName\t' + person.firstName + ';\n\t'
+            output = output + 'foaf:firstName\t"' + self.setLiterals(person.firstName) + '";\n\t'
         if len(person.lastName) > 1:
-            output = output + 'foaf:lastName\t' + person.lastName + ';\n\t'
+            output = output + 'foaf:lastName\t"' + self.setLiterals(person.lastName) + '";\n\t'
         if len(person.phone) > 1:
-            output = output + 'foaf:phone\t' + person.phone + ';\n\t'
+            output = output + 'foaf:phone\t"' + self.setLiterals(person.phone) + '";\n\t'
         if len(person.fax) > 1:
-            output = output + 'cordis:faxNumber\t' + person.fax + ';\n\t'
+            output = output + 'cordis:faxNumber\t"' + self.setLiterals(person.fax) + '";\n\t'
         if len(person.mail) > 1:
-            output = output + 'foaf:mbox\t' + person.mail + ';\n\t'
+            output = output + 'foaf:mbox\t<' + person.mail + '>;\n\t'
         output = output + '.\n\n'
         return output
 
     def setLiterals(self, string):
-        return (string[0] != '"') * '"' + string + (string[-1] != '"') * '"'
+        if string.startswith('"') and string.endswith('"'):
+            string = string[1:-1]
+        if string.startswith("'") and string.endswith("'"):
+            string = string[1:-1]
+        return string
 
     def capitalizeAll(self, string):
         output = ''
