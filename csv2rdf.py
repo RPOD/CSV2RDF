@@ -187,58 +187,70 @@ class Csv2Rdf:
     def parseCordisProject(self, entry):
         Project = namedtuple('Project', 'identifier, referenceID, name, title, homepage, startDate, endDate, status, programme, frameworkProgramme, topics, fundingScheme, budgetTotal, budgetFunding, coordinator, participants, subjects, objective')
         project = []
-        project.identifier = entry[0]
-        project.referenceID = entry[1]
-        project.name = entry[2]
-        project.title = entry[7]
-        project.homepage = entry[10]
-        project.startDate = entry[8]
-        project.endDate = entry[9]
+        project.append(entry[0])
+        project.append(entry[1])
+        project.append(entry[2])
+        project.append(entry[7])
+        project.append(entry[10])
+        project.append(entry[8])
+        project.append(entry[9])
         if len(entry[3]) > 1:
-            project.status = self.transcribeStatus(entry[3])
-        project.programme = entry[4]
-        project.frameworkProgramme = entry[6]
-        project.topics = entry[5]
-        project.fundingScheme = entry[14]
-        project.budgetTotal = entry[12]
-        project.budgetFunding = entry[13]
-        project.coordinator = entry[16].replace(' ', '_')
-        for subject in entry[20].split(';'):
-            project.subjects.append(subject)
-        project.objective = entry[11]
+            project.append(self.transcribeStatus(entry[3]))
+        else:
+            project.append('')
+        project.append(entry[4])
+        project.append(entry[6])
+        project.append(entry[5])
+        project.append(entry[14])
+        project.append(entry[12])
+        project.append(entry[13])
+        project.append(entry[16].replace(' ', '_'))
+        tmp = []
         for participant in entry[18].split(';'):
-            project.participants.append(participant.replace(' ', '_'))
-        return self.createProjectOutput(project)
+            tmp.append(participant.replace(' ', '_'))
+        project.append(tmp)
+        tmp2 = []
+        for subject in entry[20].split(';'):
+            tmp2.append(subject)
+        project.append(tmp2)
+        project.append(entry[11])
+        return self.createProjectOutput(Project(*project))
 
     def parseCordisOrganization(self, entry):
-        org = Organization()
-        org.identifier = entry[0]
-        org.referenceID = entry[1]
-        org.projectName = entry[2]
-        org.role = entry[3]
-        org.name = entry[5]
-        org.shortName = entry[6]
+        Organization = namedtuple('Organization', 'identifier, referenceID, projectName, role, name, shortName, country, activityType, endOfParticipation, city, postalCode, street, homepage, contact')
+        org = []
+        org.append(entry[0])
+        org.append(entry[1])
+        org.append(entry[2])
+        org.append(entry[3])
+        org.append(entry[5])
+        org.append(entry[6])
         if len(entry[10]) > 1:
-            org.country = self.alpha2Name(entry[10])
-        org.activityType = entry[7]
-        org.endOfParticipation = entry[8]
-        org.city = 'http://dbpedia.org/page/' + self.capitalizeAll(entry[12])
-        org.postalCode = entry[13]
-        org.street = entry[11]
-        org.homepage = (entry[14][:4] != 'http')*'http://' + entry[14]
-        org.contact = entry[17].replace(' ', '_') + '_' + entry[18].replace(' ', '_')
-        return [self.createOrganizationOutput(org), org.name]
+            org.append(self.alpha2Name(entry[10]))
+        else:
+            org.append('')
+        org.append(entry[7])
+        org.append(entry[8])
+        org.append('http://dbpedia.org/page/' + self.capitalizeAll(entry[12]))
+        org.append(entry[13])
+        org.append( entry[11])
+        org.append((entry[14][:4] != 'http')*'http://' + entry[14])
+        org.append(entry[17].replace(' ', '_') + '_' + entry[18].replace(' ', '_'))
+        output = Organization(*org)
+        return [self.createOrganizationOutput(output), output.name]
 
     def parseCordisPerson(self, entry):
-        person = Person()
-        person.type = entry[15]
-        person.title = entry[16]
-        person.firstName = entry[17]
-        person.lastName = entry[18]
-        person.phone = entry[20]
-        person.fax = entry[21]
-        person.mail = entry[22]
-        return [self.createPersonOutput(person), person.fistName + person.lastName]
+        Person = namedtuple('Person', 'type, title, firstName, lastName, phone, fax, mail')
+        person = []
+        person.append(entry[15])
+        person.append(entry[16])
+        person.append(entry[17])
+        person.append(entry[18])
+        person.append(entry[20])
+        person.append(entry[21])
+        person.append(entry[22])
+        output = Person(*person)
+        return [self.createPersonOutput(output), output.firstName + output.lastName]
 
     def createCordisObjects(self, projectsData, organizationData):
         template = self.readTemplate(self.filename + '_template.ttl')
@@ -251,15 +263,13 @@ class Csv2Rdf:
         print('start')
         of = open('full_cordis.ttl', 'w', encoding="utf-8")
         for line in template:
-            output = output + line
+            of.write(line)
         for i, project in enumerate(projectsData[1:]):
             for line in self.parseCordisProject(project):
-                output = output + line
+                of.write(line)
             print(i)
-        write(output)
-        for organization in organizationData[1:]:
+        for i, organization in enumerate(organizationData[1:]):
             org = self.parseCordisOrganization(organization)
-            print('foo')
             if (not org[1] in usedOrgs):
                 for line in org[0]:
                     of.write(line)
@@ -269,6 +279,7 @@ class Csv2Rdf:
                 for line in per[0]:
                     of.write(line)
                 usedPers.append(per[1])
+            print(i)
         of.close
 
     def createProjectOutput(self, project):
@@ -288,7 +299,7 @@ class Csv2Rdf:
                            'cordis:frameworkProgramme\t' + project.frameworkProgramme + ';\n\t' +
                            'cordis:projectTopics\t' + project.topics + ';\n\t')
         if len(project.fundingScheme) > 1:
-            output = output + 'cordis:projectFundingScheme' + project.fundingScheme + ';\n\t'
+            output = output + 'cordis:projectFundingScheme\t' + project.fundingScheme + ';\n\t'
         output = output + ('dbo:projectBudgetFunding\t' + project.budgetFunding.replace(',','.') + '^^<http://dbpedia.org/datatype/euro>;\n\t' +
                            'dbo:projectBudgetTotal\t' + project.budgetTotal.replace(',','.') +'^^<http://dbpedia.org/datatype/euro>;\n\t' +
                            'dbo:projectCoordinator\tcordis:' + project.coordinator + ';\n\t')
@@ -302,7 +313,7 @@ class Csv2Rdf:
         return output
 
     def createOrganizationOutput(self, organization):
-        output = ('cordis:' + entry[5] + ' a foaf:organization, dbc:Organisation;\n\t' +
+        output = ('cordis:' + organization.name + ' a foaf:organization, dbc:Organisation;\n\t' +
                   'cordis:organizationName\t' + organization.name + ';\n\t' +
                   'cordis:organizationShortName\t' + organization.shortName + ';\n\t')
         if len(organization.country) > 1:
