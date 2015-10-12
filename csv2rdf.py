@@ -337,7 +337,12 @@ class Csv2Rdf:
         graph.add((proRDF, RDFS.label, Literal(self.setLiterals(pro.name))))
         graph.add((proRDF, DC.title, Literal(self.setLiterals(pro.title))))
         if len(pro.homepage) > 1:
-            graph.add((proRDF, DOAP.homepage, URIRef(pro.homepage)))
+            if ';' in pro.homepage:
+                for homepage in pro.homepage.split(';'):
+                    graph.add((proRDF, DOAP.homepage, URIRef(self.setLiterals(homepage).replace('"','').replace("'",''))))
+            if ',' in pro.homepage:
+                for homepage in pro.homepage.split(','):
+                    graph.add((proRDF, DOAP.homepage, URIRef(self.setLiterals(homepage).replace('"','').replace("'",''))))
         if len(pro.startDate) > 1:
             sDate = datetime.date(int(pro.startDate.split('/')[2]), int(pro.startDate.split('/')[0]), int(pro.startDate.split('/')[1]))
             eDate = datetime.date(int(pro.endDate.split('/')[2]), int(pro.endDate.split('/')[0]), int(pro.endDate.split('/')[1]))
@@ -350,8 +355,8 @@ class Csv2Rdf:
         graph.add((proRDF, CORDIS.projectTopics, Literal(self.setLiterals(pro.topics))))
         if len(pro.fundingScheme) > 1:
             graph.add((proRDF, CORDIS.projectFundingScheme, Literal(self.setLiterals(pro.fundingScheme))))
-        graph.add((proRDF, DBO.projectBudgetFunding, Literal(self.setLiterals(pro.budgetFunding.replace(',','.'))) + '^^<http://dbpedia.org/datatype/euro>'))
-        graph.add((proRDF, DBO.projectBudgetTotal, Literal(self.setLiterals(pro.budgetTotal.replace(',','.'))) + '^^<http://dbpedia.org/datatype/euro>'))
+        graph.add((proRDF, DBO.projectBudgetFunding,Literal(self.setLiterals(pro.budgetFunding.replace(',','.')))))
+        graph.add((proRDF, DBO.projectBudgetTotal, Literal(self.setLiterals(pro.budgetTotal.replace(',','.')))))
         graph.add((proRDF, DBO.projectCoordinator, CORG[parse.quote_plus(pro.coordinator)]))
         if len(pro.participants) > 1:
             for participant in pro.participants:
@@ -401,7 +406,7 @@ class Csv2Rdf:
         if len(organization.activityType) > 1:
             graph.add((orgRDF, CORDIS.activityType, Literal(self.setLiterals(organization.activityType))))
         if len(organization.endOfParticipation) > 1:
-            graph.add((orgRDF, CORDIS.endOfParticipation, Literal(self.setLiterals(organization.activityType))))
+            graph.add((orgRDF, CORDIS.endOfParticipation, Literal(self.setLiterals(organization.endOfParticipation))))
         if len(organization.city) > 1:
             graph.add((orgRDF, DBO.locationCity, URIRef(organization.city)))
         if len(organization.street) > 1:
@@ -409,7 +414,12 @@ class Csv2Rdf:
         if len(organization.postalCode) > 1:
             graph.add((orgRDF, DBO.postalCode, Literal(self.setLiterals(organization.postalCode))))
         if len(organization.homepage) > 1:
-            graph.add((orgRDF, FOAF.homepage, URIRef(self.setLiterals(organization.homepage))))
+            if ';' in organization.homepage:
+                for homepage in organization.homepage.split(';'):
+                        graph.add((orgRDF, FOAF.homepage, URIRef(self.setLiterals(homepage).replace('"', '').replace("'",''))))
+            if ',' in organization.homepage:
+                for homepage in organization.homepage.split(','):
+                        graph.add((orgRDF, FOAF.homepage, URIRef(self.setLiterals(homepage).replace('"', '').replace("'",''))))
         if len(organization.contact) > 1:
             graph.add((orgRDF, FOAF.person, CPEO[organization.contact]))
         return organization
@@ -544,6 +554,10 @@ class Csv2Rdf:
             string = string[1:-1]
         if string.startswith("'") and string.endswith("'"):
             string = string[1:-1]
+        if string.startswith(' '):
+            string = string[1:]
+        if string.endswith(' '):
+            string = string[:-1]
         return string
 
     def capitalizeAll(self, string):
