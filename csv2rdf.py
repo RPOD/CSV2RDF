@@ -402,7 +402,7 @@ class Csv2Rdf:
         graph.add((orgRDF, CORDIS.organizationName, Literal(self.setLiterals(organization.name))))
         graph.add((orgRDF, CORDIS.organizationShortName, Literal(self.setLiterals(organization.shortName))))
         if len(organization.country) > 1:
-            graph.add((orgRDF, CORDIS.organizationCountry, DBR[organization.country]))
+            graph.add((orgRDF, CORDIS.organizationCountry, DBR[self.setLiterals(organization.country)]))
         if len(organization.activityType) > 1:
             graph.add((orgRDF, CORDIS.activityType, Literal(self.setLiterals(organization.activityType))))
         if len(organization.endOfParticipation) > 1:
@@ -447,6 +447,8 @@ class Csv2Rdf:
             graph.add((perRDF, FOAF.firstName, Literal(self.setLiterals(per.firstName))))
         if len(per.lastName) > 1:
             graph.add((perRDF, FOAF.lastName, Literal(self.setLiterals(per.lastName))))
+        if len(per.firstName) > 1 and len(per.lastName) > 1:
+            graph.add((perRDF, FOAF.name, Literal(self.setLiterals(per.firstName) + ' ' + self.setLiterals(per.lastName))))
         if len(per.phone) > 1:
             graph.add((perRDF, FOAF.phone, Literal(self.setLiterals(per.phone))))
         if len(per.fax) > 1:
@@ -471,7 +473,7 @@ class Csv2Rdf:
         for i, project in enumerate(projectsData[1:]):
             self.parseCordisProjectRDF(project, graph, hostBene)
             print(i)
-        graph.serialize('cordis_full_RDF.ttl', format='turtle')
+        graph.serialize('cordis_full_RDF.nt', format='nt')
 
     def createProjectOutput(self, project, hostBene):
         output = ('cordis:projects/' + project.identifier + ' a dbo:ResearchProject;\n\t' +
