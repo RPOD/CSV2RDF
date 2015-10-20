@@ -374,7 +374,7 @@ class Csv2Rdf:
         #return self.createProjectOutput(Project(*project), hostBene)
 
     def parseCordisOrganizationRDF(self, entry, graph):
-        Organization = namedtuple('Organization', 'identifier, referenceID, projectName, role, name, shortName, country, activityType, endOfParticipation, city, postalCode, street, homepage, contact')
+        Organization = namedtuple('Organization', 'identifier, referenceID, projectName, role, name, shortName, country, activityType, endOfParticipation, city, postalCode, street, homepage, contact, id')
         org = []
         org.append(entry[0])
         org.append(entry[1])
@@ -393,11 +393,15 @@ class Csv2Rdf:
         org.append( entry[11])
         org.append((entry[14][:4] != 'http')*'http://' + entry[14])
         org.append(parse.quote_plus(entry[17] + entry[18] + entry[6]))
+        org.append(entry[4])
         organization = Organization(*org)
         """
         Create triples
         """
-        orgRDF = CORG[parse.quote_plus(organization.name)]
+        if len(organization.id) > 1:
+            orgRDF = CORG[self.setLiterals(organization.id)]
+        else:
+            orgRDF = CORG[parse.quote_plus(organization.name)]
         graph.add((orgRDF, RDF.type, FOAF.Organization))
         graph.add((orgRDF, CORDIS.organizationName, Literal(self.setLiterals(organization.name))))
         graph.add((orgRDF, CORDIS.organizationShortName, Literal(self.setLiterals(organization.shortName))))
@@ -440,7 +444,7 @@ class Csv2Rdf:
         create Triples
         """
         perRDF = CPEO[parse.quote_plus(per.firstName + per.lastName + per.shortOrgName)]
-        graph.add((perRDF, RDF.type, FOAF.person))
+        graph.add((perRDF, RDF.type, FOAF.Person))
         if len(per.title) > 1:
             graph.add((perRDF, FOAF.title, Literal(self.setLiterals(per.title))))
         if len(per.firstName) > 1:
